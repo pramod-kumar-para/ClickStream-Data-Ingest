@@ -4,7 +4,9 @@ var mixpanel_config=require('./mixpanel-config.js'),
  	request=require('request'),
  	crypt=require('crypto'),
  	s3=require('s3');
+
 var keys=['api_key','expire','event','where','unit','to_date','from_date','type','format'];
+//mixpanel credentials
 var api_key=mixpanel_config.api_access_key;
 var api_secret=mixpanel_config.api_access_secret;
 var api_endpoint='http://mixpanel.com/api/2.0/events?';
@@ -13,8 +15,10 @@ var where='';
 var type='general';
 var from_date='2015-06-20';
 var to_date='2015-06-27';
+//Clickstream events to be retrieved
 var event=JSON.stringify(['View page','Video play']);
 var expire=Date.now()+60*10*1000;
+//format can be json or csv
 var format='csv';
 function getApiParameters(keys) {
   return [
@@ -30,8 +34,11 @@ function getApiParameters(keys) {
     ];
 }
 var parameters=getApiParameters(keys);
+//sorting the parameters and appending api secret for generating api signature
 var sortparam=parameters.sort().join('')+api_secret;
+//creating a signature 
 var signature=crypt.createHash('md5').update(sortparam).digest('hex');
+
 var urlParams=getApiParameters(keys).join('&')+"&sig="+signature;
 urlParams = urlParams.replace(/\%/g, '%25');   
 urlParams = urlParams.replace(/\s/g, '%20');
@@ -45,11 +52,12 @@ urlParams = urlParams.replace(/\</g, '%3C');
 urlParams = urlParams.replace(/\-/g, '%2D');   
 urlParams = urlParams.replace(/\+/g, '%2B');   
 urlParams = urlParams.replace(/\//g, '%2F');
+//forming the url to export data from mixpanel
 var url=api_endpoint+urlParams;
-console.log(url);
 request(url, function(err, res, body) {
     if (!err && res.statusCode == 200) {
 	     console.log(body);
+	     //writing mixpanel data to a local file
 	      fs.writeFile('./mixpanel.csv',body,function(err) {
           if(err) throw err;
           console.log('saved');
@@ -61,6 +69,7 @@ request(url, function(err, res, body) {
   multipartUploadThreshold: 20971520, 
   multipartUploadSize: 15728640, 
   s3Options: {
+  	//s3 credentials
     accessKeyId: s3_config.access_key_id,
     secretAccessKey: s3_config.access_key_token,
     },
@@ -74,6 +83,7 @@ request(url, function(err, res, body) {
     Key: "/mixpanel",
     },
 };
+//uploading our local file to Amazon s3
 var uploader = client.uploadFile(params);
 uploader.on('error', function(err) {
   console.error("unable to upload:", err.stack);
