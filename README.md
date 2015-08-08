@@ -1,2 +1,2 @@
 # ClickStream-Data-Ingest
-Extracting Click-Stream parameters and Uploading to Internet Storage(Amazon S3)
+Extracting Click-Stream data from MixPanel and Uploading to Cloud Storage(Amazon S3)
